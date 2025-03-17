@@ -5,13 +5,7 @@ import moment from "moment";
 import axios from "axios";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import "bootstrap/dist/css/bootstrap.min.css";
-import {
-  getallevents,
-  createevent,
-  updateevent,
-  deleteevent,
-  timezoneandlocation,
-} from "../config";
+import { getallevents, createevent, updateevent, deleteevent, timezoneandlocation } from "../config";
 
 const localizer = momentLocalizer(moment);
 const DragAndDropCalendar = withDragAndDrop(Calendar);
@@ -40,15 +34,27 @@ const CalendarComponent = () => {
   }, []);
 
   useEffect(() => {
-      axios.get("http://ip-api.com/json/")
-        .then((response) => setIp(response.data.query))
-        .catch((error) => console.error("Error fetching IP:", error));
+    axios.get("http://ip-api.com/json/")
+      .then((response) => {
+        const clientIp = response.data.query;
+        setIp(clientIp);
+        axios.post("http://localhost:8090/events/addallowedip", { ip: clientIp })
+          .then((response) => {
+            console.log("IP added to allowed list:", clientIp);
+          })
+          .catch((error) => {
+            console.error("Error adding IP to allowed list:", error);
+          });
+      })
+      .catch((error) => {
+        console.error("Error fetching IP:", error);
+      });
   }, []);
 
   useEffect(() => {
     axios.get(getallevents)
       .then((response) => {
-        if (response.status == 200) {
+        if (response.status === 200) {
           const formattedEvents = response.data.map((event) => ({
             ...event,
             start: new Date(event.start),
@@ -65,93 +71,93 @@ const CalendarComponent = () => {
   }, [timezone]);
 
   const createEvents = useCallback(async ({ start }) => {
-      const title = window.prompt("Enter Event Title:");
-      if (title) {
-        const newEvent = {
-          title,
-          start: new Date(start),
-          end: new Date(moment(start).add(1, "hour")),
-        };
-        try {
-          const response = await axios.post(createevent, newEvent);
-          if (response.status == 202) {
-            setEvents([
-              ...events,
-              {
-                ...response.data,
-                start: new Date(response.data.start),
-                end: new Date(response.data.end),
-              },
-            ]);
-          } else {
-            console.error("Error adding event");
-          }
-        } catch (error) {
-          console.error("Error adding event:", error);
+    const title = window.prompt("Enter Event Title:");
+    if (title) {
+      const newEvent = {
+        title,
+        start: new Date(start),
+        end: new Date(moment(start).add(1, "hour")),
+      };
+      try {
+        const response = await axios.post(createevent, newEvent);
+        if (response.status === 202) {
+          setEvents([
+            ...events,
+            {
+              ...response.data,
+              start: new Date(response.data.start),
+              end: new Date(response.data.end),
+            },
+          ]);
+        } else {
+          console.error("Error adding event");
         }
+      } catch (error) {
+        console.error("Error adding event:", error);
       }
-    },[events]);
+    }
+  }, [events]);
 
   const editEvent = useCallback(async (event) => {
-      const newTitle = window.prompt("Edit event title:", event.title);
-      if (newTitle) {
-        try {
-          const updatedEvent = { ...event, title: newTitle };
-          const response = await axios.put(
-            `${updateevent}/${event.id}`,
-            updatedEvent
-          );
-          if (response.status == 202) {
-            setEvents(
-              events.map((e) => (e.id === event.id ? updatedEvent : e))
-            );
-          } else {
-            console.error("Error updating event");
-          }
-        } catch (error) {
-          console.error("Error updating event:", error);
-        }
-      }
-    },[events]);
-
-  const deleteEvent = useCallback(async (event) => {
-      if (window.confirm(`Are you sure you want to delete "${event.title}"?`)) {
-        try {
-          const response = await axios.delete(`${deleteevent}/${event.id}`);
-          if (response.status == 200) {
-            setEvents(events.filter((e) => e.id !== event.id));
-          }
-        } catch (error) {
-          console.error("Error deleting event:", error);
-        }
-      }
-    },[events]);
-
-  const dragDropEvent = useCallback(async ({ event, start, end }) => {
+    const newTitle = window.prompt("Edit event title:", event.title);
+    if (newTitle) {
       try {
-        const updatedEvent = {
-          ...event,
-          start: new Date(start),
-          end: new Date(end),
-        };
+        const updatedEvent = { ...event, title: newTitle };
         const response = await axios.put(
           `${updateevent}/${event.id}`,
           updatedEvent
         );
-        if (response.status == 202) {
-          setEvents(events.map((e) => (e.id === event.id ? updatedEvent : e)));
+        if (response.status === 202) {
+          setEvents(
+            events.map((e) => (e.id === event.id ? updatedEvent : e))
+          );
         } else {
-          console.log("Error updating event position");
+          console.error("Error updating event");
         }
       } catch (error) {
-        console.error("Error updating event position:", error);
+        console.error("Error updating event:", error);
       }
-    },[events]);
+    }
+  }, [events]);
+
+  const deleteEvent = useCallback(async (event) => {
+    if (window.confirm(`Are you sure you want to delete "${event.title}"?`)) {
+      try {
+        const response = await axios.delete(`${deleteevent}/${event.id}`);
+        if (response.status === 200) {
+          setEvents(events.filter((e) => e.id !== event.id));
+        }
+      } catch (error) {
+        console.error("Error deleting event:", error);
+      }
+    }
+  }, [events]);
+
+  const dragDropEvent = useCallback(async ({ event, start, end }) => {
+    try {
+      const updatedEvent = {
+        ...event,
+        start: new Date(start),
+        end: new Date(end),
+      };
+      const response = await axios.put(
+        `${updateevent}/${event.id}`,
+        updatedEvent
+      );
+      if (response.status === 202) {
+        setEvents(events.map((e) => (e.id === event.id ? updatedEvent : e)));
+      } else {
+        console.log("Error updating event position");
+      }
+    } catch (error) {
+      console.error("Error updating event position:", error);
+    }
+  }, [events]);
 
   const handleViewChange = useCallback((newView) => {
-      setView(newView);
-      localStorage.setItem("calendarView", newView);
-    },[view]);
+    setView(newView);
+    localStorage.setItem("calendarView", newView);
+  }, [view]);
 
   return (
     <div className="container mt-4">

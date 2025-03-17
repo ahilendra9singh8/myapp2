@@ -1,7 +1,7 @@
-// const getallevents = `http://localhost:8080/events/getallevents`;
-// const createevent = `http://localhost:8080/events/createevent`;
-// const updateevent = `http://localhost:8080/events/updateevent`;
-// const deleteevent = `http://localhost:8080/events/deleteevent`;
+// const getallevents = `http://localhost:8090/events/getallevents`;
+// const createevent = `http://localhost:8090/events/createevent`;
+// const updateevent = `http://localhost:8090/events/updateevent`;
+// const deleteevent = `http://localhost:8090/events/deleteevent`;
 // const timezoneandlocation = `http://ip-api.com/json`;
 
 // aws server
