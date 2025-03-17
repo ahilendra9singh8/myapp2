@@ -5,7 +5,7 @@ import moment from "moment";
 import axios from "axios";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import "bootstrap/dist/css/bootstrap.min.css";
-import { getallevents, createevent, updateevent, deleteevent, timezoneandlocation } from "../config";
+import { getallevents, createevent, updateevent, deleteevent, timezoneandlocation, addallowedip } from "../config";
 
 const localizer = momentLocalizer(moment);
 const DragAndDropCalendar = withDragAndDrop(Calendar);
@@ -38,7 +38,7 @@ const CalendarComponent = () => {
       .then((response) => {
         const clientIp = response.data.query;
         setIp(clientIp);
-        axios.post("http://localhost:8090/events/addallowedip", { ip: clientIp })
+        axios.post(addallowedip, { ip: clientIp })
           .then((response) => {
             console.log("IP added to allowed list:", clientIp);
           })
