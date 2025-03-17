@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Calendar, momentLocalizer } from "react-big-calendar";
 import withDragAndDrop from "react-big-calendar/lib/addons/dragAndDrop";
 import moment from "moment";
@@ -16,7 +16,7 @@ const CalendarComponent = () => {
   const [view, setView] = useState(localStorage.getItem("calendarView") || "month");
   const [timezone, setTimezone] = useState("Fetching UTC...");
   const [location, setLocation] = useState("Fetching location...");
-  const [ip, setIp] = useState("Fetching IP...");
+  const [ip, setIp] = useState("");
 
   useEffect(() => {
     axios.get(timezoneandlocation)
@@ -33,26 +33,23 @@ const CalendarComponent = () => {
       });
   }, []);
 
-  useEffect(() => {
+  useEffect(() =>{
     axios.get("http://ip-api.com/json/")
       .then((response) => {
         const clientIp = response.data.query;
         setIp(clientIp);
-        axios.post(addallowedip, { ip: clientIp })
-          .then((response) => {
-            console.log("IP added to allowed list:", clientIp);
-          })
-          .catch((error) => {
-            console.error("Error adding IP to allowed list:", error);
-          });
       })
       .catch((error) => {
         console.error("Error fetching IP:", error);
       });
-  }, []);
+
+  },[]);
 
   useEffect(() => {
-    axios.get(getallevents)
+    if (ip) {
+      axios.get(getallevents, {
+        headers: { "X-Client-IP": ip }
+      })
       .then((response) => {
         if (response.status === 200) {
           const formattedEvents = response.data.map((event) => ({
@@ -68,7 +65,9 @@ const CalendarComponent = () => {
       .catch((error) => {
         console.error("Error fetching events:", error);
       });
-  }, [timezone]);
+    }
+  }, [ip, timezone]);
+  
 
   const createEvents = useCallback(async ({ start }) => {
     const title = window.prompt("Enter Event Title:");
@@ -77,6 +76,9 @@ const CalendarComponent = () => {
         title,
         start: new Date(start),
         end: new Date(moment(start).add(1, "hour")),
+        ipAddress: ip,
+        location,
+        timezone
       };
       try {
         const response = await axios.post(createevent, newEvent);
@@ -164,7 +166,7 @@ const CalendarComponent = () => {
       <div className="card shadow-sm p-4">
         <h2 className="text-center mb-4 text-primary">Calendar</h2>
         <div className="alert alert-info text-center">
-          <strong>Location:</strong> {location} | <strong>Timezone:</strong> {timezone} | <strong>IP:</strong> {ip}
+        <strong>Location:</strong> {location} | <strong>Timezone:</strong> {timezone} | <strong>IP:</strong> {ip || "Fetching..."}
         </div>
         <div className="row">
           <div className="col-md-9">
