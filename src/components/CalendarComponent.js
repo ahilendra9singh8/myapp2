@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Calendar, momentLocalizer } from "react-big-calendar";
 import withDragAndDrop from "react-big-calendar/lib/addons/dragAndDrop";
 import moment from "moment";
 import axios from "axios";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import "bootstrap/dist/css/bootstrap.min.css";
-import { getallevents, createevent, updateevent, deleteevent, timezoneandlocation, addallowedip } from "../config";
+import { getallevents, createevent, updateevent, deleteevent, timezoneandlocation } from "../config";
 
 const localizer = momentLocalizer(moment);
 const DragAndDropCalendar = withDragAndDrop(Calendar);
@@ -98,7 +98,7 @@ const CalendarComponent = () => {
         console.error("Error adding event:", error);
       }
     }
-  }, [events]);
+  }, [ip,location,timezone,events]);
 
   const editEvent = useCallback(async (event) => {
     const newTitle = window.prompt("Edit event title:", event.title);
@@ -159,7 +159,7 @@ const CalendarComponent = () => {
   const handleViewChange = useCallback((newView) => {
     setView(newView);
     localStorage.setItem("calendarView", newView);
-  }, [view]);
+  }, []);
 
   return (
     <div className="container mt-4">
